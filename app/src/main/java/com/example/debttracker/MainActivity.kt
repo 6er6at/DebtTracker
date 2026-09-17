@@ -3,48 +3,106 @@ package com.example.debttracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.clickable
 import com.example.debttracker.ui.theme.DebtTrackerTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
             DebtTrackerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
-                    val name = "Алекс"
-
-                    Greeting(
-                        name = name,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                DebtTrackerApp()
             }
         }
     }
 }
-
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Привет $name!",
-        modifier = modifier
-    )
-}
+fun DebtTrackerApp() {
+    var selectedTab by remember { mutableStateOf(0) }
+    Column(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Text(text = "Учёт долгов",
+                    fontSize = 28.sp)
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+        Text(
+            text = "Контроль ваших долгов в одном месте",
+            fontSize = 20.sp
+        )
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        selectedTab = 0
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Мне должны",
+                    fontSize = 15.sp
+                )
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DebtTrackerTheme {
-        Greeting("Android")
+                if (selectedTab == 0) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(Color.Black)
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        selectedTab = 1
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Я должен",
+                    fontSize = 15.sp
+                )
+
+                if (selectedTab == 1) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(Color.Black)
+                    )
+                }
+            }
+        }
     }
 }
