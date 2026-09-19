@@ -1,30 +1,37 @@
 package com.example.debttracker
 
-import android.app.DatePickerDialog
+import androidx.compose.animation.core.animateDpAsState
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
@@ -33,15 +40,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +57,6 @@ import java.util.Calendar
 fun DebtDetailsSheet(
     debt: Debt,
     history: List<DebtHistory>,
-
     onEdit: () -> Unit,
     onAmountChange: () -> Unit,
     onDelete: () -> Unit,
@@ -70,18 +77,32 @@ fun DebtDetailsSheet(
                 )
         ) {
 
-            Text(
-                text = debt.personName,
-                fontSize = 26.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = debt.personName,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                DebtStatusBadge(
+                    status = debt.status
+                )
+            }
 
             Spacer(
-                modifier = Modifier.height(8.dp)
+                modifier = Modifier.height(10.dp)
             )
 
             Text(
                 text = "${debt.amount} ₽",
-                fontSize = 24.sp
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
 
             if (debt.returnDate != null) {
@@ -97,7 +118,11 @@ fun DebtDetailsSheet(
                                 "dd.MM.yyyy"
                             )
                         )
-                    }"
+                    }",
+
+                    style = MaterialTheme.typography.bodyMedium,
+
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -109,12 +134,17 @@ fun DebtDetailsSheet(
 
                 Text(
                     text = "Комментарий:",
-                    fontSize = 15.sp
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(
+                    modifier = Modifier.height(2.dp)
                 )
 
                 Text(
                     text = debt.comment!!,
-                    fontSize = 16.sp
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
@@ -126,7 +156,6 @@ fun DebtDetailsSheet(
                 onClick = onAmountChange,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text("Изменить сумму")
             }
 
@@ -138,7 +167,6 @@ fun DebtDetailsSheet(
                 onClick = onEdit,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text("Редактировать")
             }
 
@@ -150,7 +178,6 @@ fun DebtDetailsSheet(
                 onClick = onDelete,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text("Удалить")
             }
 
@@ -160,7 +187,8 @@ fun DebtDetailsSheet(
 
             Text(
                 text = "История",
-                fontSize = 22.sp
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(
@@ -170,7 +198,8 @@ fun DebtDetailsSheet(
             if (history.isEmpty()) {
 
                 Text(
-                    text = "История пока пуста"
+                    text = "История пока пуста",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
             } else {
@@ -178,9 +207,7 @@ fun DebtDetailsSheet(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(
-                            max = 280.dp
-                        ),
+                        .heightIn(max = 280.dp),
 
                     verticalArrangement =
                         Arrangement.spacedBy(8.dp)
@@ -202,6 +229,20 @@ fun HistoryItem(
     history: DebtHistory
 ) {
 
+    val operationColor =
+        if (history.amountChange > 0) {
+            Color(0xFFDC2626)
+        } else {
+            Color(0xFF16A34A)
+        }
+
+    val sign =
+        if (history.amountChange > 0) {
+            "+"
+        } else {
+            ""
+        }
+
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -210,22 +251,26 @@ fun HistoryItem(
             modifier = Modifier.padding(12.dp)
         ) {
 
-            val sign =
-                if (history.amountChange > 0) {
-                    "+"
-                } else {
-                    ""
-                }
-
             Text(
                 text =
                     "$sign${history.amountChange} ₽",
-                fontSize = 18.sp
+
+                style =
+                    MaterialTheme.typography.titleMedium,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color =
+                    operationColor
             )
 
             Text(
                 text =
-                    "Остаток: ${history.balanceAfter} ₽"
+                    "Остаток: ${history.balanceAfter} ₽",
+
+                style =
+                    MaterialTheme.typography.bodyMedium
             )
 
             Text(
@@ -236,7 +281,12 @@ fun HistoryItem(
                         )
                     ),
 
-                fontSize = 13.sp
+                style =
+                    MaterialTheme.typography.labelSmall,
+
+                color =
+                    MaterialTheme.colorScheme
+                        .onSurfaceVariant
             )
 
             if (!history.comment.isNullOrBlank()) {
@@ -247,7 +297,9 @@ fun HistoryItem(
 
                 Text(
                     text = history.comment!!,
-                    fontSize = 14.sp
+
+                    style =
+                        MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -295,42 +347,130 @@ fun AmountChangeDialog(
                 )
 
                 Spacer(
-                    modifier = Modifier.height(12.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth()
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(
+                            RoundedCornerShape(14.dp)
+                        )
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .padding(4.dp)
                 ) {
 
-                    Button(
-                        onClick = {
-                            increase = true
-                        },
-                        modifier =
-                            Modifier.weight(1f)
-                    ) {
+                    val segmentWidth =
+                        maxWidth / 2
 
-                        Text("+ Увеличить")
-                    }
-
-                    Spacer(
-                        modifier = Modifier.padding(4.dp)
+                    val indicatorOffset by
+                    animateDpAsState(
+                        targetValue =
+                            if (increase) {
+                                0.dp
+                            } else {
+                                segmentWidth
+                            },
+                        label =
+                            "operationIndicator"
                     )
 
-                    Button(
-                        onClick = {
-                            increase = false
-                        },
-                        modifier =
-                            Modifier.weight(1f)
+                    Box(
+                        modifier = Modifier
+                            .width(segmentWidth)
+                            .fillMaxHeight()
+                            .offset(
+                                x = indicatorOffset
+                            )
+                            .clip(
+                                RoundedCornerShape(10.dp)
+                            )
+                            .background(
+                                MaterialTheme.colorScheme.surface
+                            )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxSize()
                     ) {
 
-                        Text("− Уменьшить")
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable {
+                                    increase = true
+                                },
+
+                            contentAlignment =
+                                Alignment.Center
+                        ) {
+
+                            Text(
+                                text = "+  Увеличить",
+
+                                color =
+                                    if (increase) {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .primary
+                                    } else {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                    },
+
+                                fontWeight =
+                                    if (increase) {
+                                        FontWeight.SemiBold
+                                    } else {
+                                        FontWeight.Normal
+                                    }
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable {
+                                    increase = false
+                                },
+
+                            contentAlignment =
+                                Alignment.Center
+                        ) {
+
+                            Text(
+                                text = "−  Уменьшить",
+
+                                color =
+                                    if (!increase) {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .primary
+                                    } else {
+                                        MaterialTheme
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                    },
+
+                                fontWeight =
+                                    if (!increase) {
+                                        FontWeight.SemiBold
+                                    } else {
+                                        FontWeight.Normal
+                                    }
+                            )
+                        }
                     }
                 }
 
                 Spacer(
-                    modifier = Modifier.height(12.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
                 OutlinedTextField(
@@ -361,9 +501,7 @@ fun AmountChangeDialog(
                     },
 
                     label = {
-                        Text(
-                            "Комментарий к операции"
-                        )
+                        Text("Комментарий к операции")
                     },
 
                     modifier =
@@ -378,7 +516,10 @@ fun AmountChangeDialog(
 
                     Text(
                         text = errorText,
-                        color = Color.Red
+                        color =
+                            MaterialTheme
+                                .colorScheme
+                                .error
                     )
                 }
             }
@@ -439,7 +580,6 @@ fun AmountChangeDialog(
             Button(
                 onClick = onDismiss
             ) {
-
                 Text("Отмена")
             }
         }
@@ -467,13 +607,14 @@ fun EditDebtDialog(
     }
 
     var returnDate by remember {
-
         mutableStateOf(
-            debt.returnDate?.format(
-                DateTimeFormatter.ofPattern(
-                    "dd.MM.yyyy"
-                )
-            ) ?: ""
+            debt.returnDate
+        )
+    }
+
+    var reminderDays by remember {
+        mutableStateOf(
+            debt.reminderDays
         )
     }
 
@@ -482,8 +623,6 @@ fun EditDebtDialog(
             debt.comment ?: ""
         )
     }
-
-    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -495,9 +634,10 @@ fun EditDebtDialog(
         text = {
 
             Column(
-                modifier = Modifier.verticalScroll(
-                    rememberScrollState()
-                )
+                modifier =
+                    Modifier.verticalScroll(
+                        rememberScrollState()
+                    )
             ) {
 
                 OutlinedTextField(
@@ -538,71 +678,27 @@ fun EditDebtDialog(
                     modifier = Modifier.height(8.dp)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
+                DebtDatePickerField(
+                    selectedDate =
+                        returnDate,
 
-                            val calendar =
-                                Calendar.getInstance()
+                    onDateSelected = {
+                        returnDate = it
+                    }
+                )
 
-                            DatePickerDialog(
-                                context,
-                                { _, year, month, dayOfMonth ->
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
-                                    returnDate =
-                                        String.format(
-                                            "%02d.%02d.%04d",
-                                            dayOfMonth,
-                                            month + 1,
-                                            year
-                                        )
-                                },
+                ReminderSelector(
+                    selected =
+                        reminderDays,
 
-                                calendar.get(
-                                    Calendar.YEAR
-                                ),
-
-                                calendar.get(
-                                    Calendar.MONTH
-                                ),
-
-                                calendar.get(
-                                    Calendar.DAY_OF_MONTH
-                                )
-                            ).show()
-                        }
-                ) {
-
-                    OutlinedTextField(
-                        value = returnDate,
-
-                        onValueChange = {},
-
-                        readOnly = true,
-                        enabled = false,
-
-                        label = {
-                            Text("Дата возврата")
-                        },
-
-                        colors =
-                            OutlinedTextFieldDefaults
-                                .colors(
-                                    disabledTextColor =
-                                        Color.Black,
-
-                                    disabledLabelColor =
-                                        Color(0xFF6750A4),
-
-                                    disabledBorderColor =
-                                        Color(0xFF6750A4)
-                                ),
-
-                        modifier =
-                            Modifier.fillMaxWidth()
-                    )
-                }
+                    onSelected = {
+                        reminderDays = it
+                    }
+                )
 
                 Spacer(
                     modifier = Modifier.height(8.dp)
@@ -639,21 +735,6 @@ fun EditDebtDialog(
                         parsedAmount > 0
                     ) {
 
-                        val parsedDate =
-                            if (returnDate.isNotBlank()) {
-
-                                LocalDate.parse(
-                                    returnDate,
-
-                                    DateTimeFormatter.ofPattern(
-                                        "dd.MM.yyyy"
-                                    )
-                                )
-
-                            } else {
-                                null
-                            }
-
                         val updatedDebt =
                             debt.copy(
                                 personName =
@@ -663,7 +744,10 @@ fun EditDebtDialog(
                                     parsedAmount,
 
                                 returnDate =
-                                    parsedDate,
+                                    returnDate,
+
+                                reminderDays =
+                                    reminderDays,
 
                                 comment =
                                     comment.ifBlank {
@@ -689,7 +773,6 @@ fun EditDebtDialog(
             Button(
                 onClick = onDismiss
             ) {
-
                 Text("Отмена")
             }
         }
@@ -713,14 +796,16 @@ fun AddDebtDialog(
     }
 
     var returnDate by remember {
-        mutableStateOf("")
+        mutableStateOf<LocalDate?>(null)
+    }
+
+    var reminderDays by remember {
+        mutableStateOf<ReminderDays?>(null)
     }
 
     var comment by remember {
         mutableStateOf("")
     }
-
-    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -732,9 +817,10 @@ fun AddDebtDialog(
         text = {
 
             Column(
-                modifier = Modifier.verticalScroll(
-                    rememberScrollState()
-                )
+                modifier =
+                    Modifier.verticalScroll(
+                        rememberScrollState()
+                    )
             ) {
 
                 OutlinedTextField(
@@ -775,72 +861,27 @@ fun AddDebtDialog(
                     modifier = Modifier.height(8.dp)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
+                DebtDatePickerField(
+                    selectedDate =
+                        returnDate,
 
-                            val calendar =
-                                Calendar.getInstance()
+                    onDateSelected = {
+                        returnDate = it
+                    }
+                )
 
-                            DatePickerDialog(
-                                context,
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
-                                { _, year, month, dayOfMonth ->
+                ReminderSelector(
+                    selected =
+                        reminderDays,
 
-                                    returnDate =
-                                        String.format(
-                                            "%02d.%02d.%04d",
-                                            dayOfMonth,
-                                            month + 1,
-                                            year
-                                        )
-                                },
-
-                                calendar.get(
-                                    Calendar.YEAR
-                                ),
-
-                                calendar.get(
-                                    Calendar.MONTH
-                                ),
-
-                                calendar.get(
-                                    Calendar.DAY_OF_MONTH
-                                )
-                            ).show()
-                        }
-                ) {
-
-                    OutlinedTextField(
-                        value = returnDate,
-
-                        onValueChange = {},
-
-                        readOnly = true,
-                        enabled = false,
-
-                        label = {
-                            Text("Дата возврата")
-                        },
-
-                        colors =
-                            OutlinedTextFieldDefaults
-                                .colors(
-                                    disabledTextColor =
-                                        Color.Black,
-
-                                    disabledLabelColor =
-                                        Color(0xFF6750A4),
-
-                                    disabledBorderColor =
-                                        Color(0xFF6750A4)
-                                ),
-
-                        modifier =
-                            Modifier.fillMaxWidth()
-                    )
-                }
+                    onSelected = {
+                        reminderDays = it
+                    }
+                )
 
                 Spacer(
                     modifier = Modifier.height(8.dp)
@@ -877,21 +918,6 @@ fun AddDebtDialog(
                         parsedAmount > 0
                     ) {
 
-                        val parsedDate =
-                            if (returnDate.isNotBlank()) {
-
-                                LocalDate.parse(
-                                    returnDate,
-
-                                    DateTimeFormatter.ofPattern(
-                                        "dd.MM.yyyy"
-                                    )
-                                )
-
-                            } else {
-                                null
-                            }
-
                         val debt =
                             Debt(
                                 id =
@@ -907,7 +933,7 @@ fun AddDebtDialog(
                                     debtType,
 
                                 returnDate =
-                                    parsedDate,
+                                    returnDate,
 
                                 comment =
                                     comment.ifBlank {
@@ -918,7 +944,7 @@ fun AddDebtDialog(
                                     DebtStatus.ACTIVE,
 
                                 reminderDays =
-                                    null
+                                    reminderDays
                             )
 
                         viewModel.addDebt(
@@ -939,7 +965,6 @@ fun AddDebtDialog(
             Button(
                 onClick = onDismiss
             ) {
-
                 Text("Отмена")
             }
         }

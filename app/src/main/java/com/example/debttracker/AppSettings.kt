@@ -22,8 +22,14 @@ enum class SortMode {
 
 object AppSettings {
 
-    private const val THEME_KEY = "theme_mode"
-    private const val SORT_KEY = "sort_mode"
+    private const val THEME_KEY =
+        "theme_mode"
+
+    private const val SORT_KEY =
+        "sort_mode"
+
+    private const val NOTIFICATION_PERMISSION_ASKED_KEY =
+        "notification_permission_asked"
 
 
     fun loadTheme(
@@ -89,6 +95,30 @@ object AppSettings {
             .putString(
                 SORT_KEY,
                 mode.name
+            )
+            .apply()
+    }
+
+
+    fun wasNotificationPermissionAsked(
+        preferences: SharedPreferences
+    ): Boolean {
+
+        return preferences.getBoolean(
+            NOTIFICATION_PERMISSION_ASKED_KEY,
+            false
+        )
+    }
+
+
+    fun markNotificationPermissionAsked(
+        preferences: SharedPreferences
+    ) {
+
+        preferences.edit()
+            .putBoolean(
+                NOTIFICATION_PERMISSION_ASKED_KEY,
+                true
             )
             .apply()
     }

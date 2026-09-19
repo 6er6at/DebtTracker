@@ -24,10 +24,9 @@ import androidx.compose.ui.unit.sp
 fun SettingsSheet(
     themeMode: ThemeMode,
     sortMode: SortMode,
-
     onThemeChanged: (ThemeMode) -> Unit,
     onSortChanged: (SortMode) -> Unit,
-
+    onArchiveClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
 
@@ -64,8 +63,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Системная",
-                selected =
-                    themeMode == ThemeMode.SYSTEM,
+                selected = themeMode == ThemeMode.SYSTEM,
                 onClick = {
                     onThemeChanged(
                         ThemeMode.SYSTEM
@@ -75,8 +73,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Светлая",
-                selected =
-                    themeMode == ThemeMode.LIGHT,
+                selected = themeMode == ThemeMode.LIGHT,
                 onClick = {
                     onThemeChanged(
                         ThemeMode.LIGHT
@@ -86,8 +83,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Тёмная",
-                selected =
-                    themeMode == ThemeMode.DARK,
+                selected = themeMode == ThemeMode.DARK,
                 onClick = {
                     onThemeChanged(
                         ThemeMode.DARK
@@ -110,8 +106,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Без сортировки",
-                selected =
-                    sortMode == SortMode.NONE,
+                selected = sortMode == SortMode.NONE,
                 onClick = {
                     onSortChanged(
                         SortMode.NONE
@@ -121,8 +116,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Сумма: сначала больше",
-                selected =
-                    sortMode == SortMode.AMOUNT_DESC,
+                selected = sortMode == SortMode.AMOUNT_DESC,
                 onClick = {
                     onSortChanged(
                         SortMode.AMOUNT_DESC
@@ -132,8 +126,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Сумма: сначала меньше",
-                selected =
-                    sortMode == SortMode.AMOUNT_ASC,
+                selected = sortMode == SortMode.AMOUNT_ASC,
                 onClick = {
                     onSortChanged(
                         SortMode.AMOUNT_ASC
@@ -143,8 +136,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Дата возврата: ближайшая",
-                selected =
-                    sortMode == SortMode.DATE_ASC,
+                selected = sortMode == SortMode.DATE_ASC,
                 onClick = {
                     onSortChanged(
                         SortMode.DATE_ASC
@@ -154,8 +146,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Дата возврата: дальняя",
-                selected =
-                    sortMode == SortMode.DATE_DESC,
+                selected = sortMode == SortMode.DATE_DESC,
                 onClick = {
                     onSortChanged(
                         SortMode.DATE_DESC
@@ -165,8 +156,7 @@ fun SettingsSheet(
 
             SettingsOption(
                 text = "Имя: А–Я",
-                selected =
-                    sortMode == SortMode.NAME_ASC,
+                selected = sortMode == SortMode.NAME_ASC,
                 onClick = {
                     onSortChanged(
                         SortMode.NAME_ASC
@@ -175,14 +165,24 @@ fun SettingsSheet(
             )
 
             Spacer(
-                modifier = Modifier.height(16.dp)
+                modifier = Modifier.height(20.dp)
+            )
+
+            Button(
+                onClick = onArchiveClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Погашенные долги")
+            }
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
             )
 
             Button(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text("Закрыть")
             }
 
@@ -202,11 +202,12 @@ private fun SettingsOption(
 ) {
 
     Text(
-        text = if (selected) {
-            "●  $text"
-        } else {
-            "○  $text"
-        },
+        text =
+            if (selected) {
+                "●  $text"
+            } else {
+                "○  $text"
+            },
 
         fontSize = 17.sp,
 
