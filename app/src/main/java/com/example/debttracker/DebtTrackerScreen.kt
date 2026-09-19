@@ -1,8 +1,13 @@
 package com.example.debttracker
 
+import android.Manifest
 import android.app.Application
+import android.content.pm.PackageManager
+import android.os.Build
 
-import androidx.compose.foundation.background
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -14,15 +19,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
@@ -31,10 +29,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
@@ -43,9 +43,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.core.content.ContextCompat
+
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
+
 import com.example.debttracker.ui.theme.DebtTrackerTheme
+
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -59,6 +64,7 @@ fun DebtTrackerRoot() {
             0
         )
     }
+
     val notificationPermissionLauncher =
         rememberLauncherForActivityResult(
             contract =
@@ -77,18 +83,15 @@ fun DebtTrackerRoot() {
         ) {
 
             val permissionGranted =
-                androidx.core.content.ContextCompat
-                    .checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) ==
-                        PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
 
             val alreadyAsked =
-                AppSettings
-                    .wasNotificationPermissionAsked(
-                        preferences
-                    )
+                AppSettings.wasNotificationPermissionAsked(
+                    preferences
+                )
 
             if (
                 !permissionGranted &&
@@ -170,9 +173,15 @@ fun DebtTrackerScreen(
     onThemeChanged: (ThemeMode) -> Unit
 ) {
 
-    var selectedTab by remember {
-        mutableStateOf(0)
-    }
+    val pagerState =
+        rememberPagerState(
+            pageCount = {
+                2
+            }
+        )
+
+    val coroutineScope =
+        rememberCoroutineScope()
 
     var showAddDebt by remember {
         mutableStateOf(false)
@@ -209,8 +218,7 @@ fun DebtTrackerScreen(
             factory =
                 AndroidViewModelFactory
                     .getInstance(
-                        context
-                            .applicationContext
+                        context.applicationContext
                                 as Application
                     )
         )
@@ -226,56 +234,61 @@ fun DebtTrackerScreen(
             it.id == selectedDebtId
         }
 
-    var filteredDebts =
-        debts.filter { debt ->
+    fun getFilteredDebts(
+        tab: Int
+    ): List<Debt> {
 
-            debt.status == DebtStatus.ACTIVE &&
+        var result =
+            debts.filter { debt ->
 
-                    if (selectedTab == 0) {
-                        debt.type == DebtType.OWED_TO_ME
-                    } else {
-                        debt.type == DebtType.I_OWE
-                    }
+                debt.status == DebtStatus.ACTIVE &&
+
+                        if (tab == 0) {
+                            debt.type ==
+                                    DebtType.OWED_TO_ME
+                        } else {
+                            debt.type ==
+                                    DebtType.I_OWE
+                        }
+            }
+
+        val search =
+            searchQuery.trim()
+
+        if (search.isNotBlank()) {
+
+            result =
+                result.filter { debt ->
+
+                    debt.personName.contains(
+                        search,
+                        ignoreCase = true
+                    ) ||
+
+                            debt.comment?.contains(
+                                search,
+                                ignoreCase = true
+                            ) == true
+                }
         }
 
-    val search =
-        searchQuery.trim()
-
-    if (search.isNotBlank()) {
-
-        filteredDebts =
-            filteredDebts.filter { debt ->
-
-                debt.personName.contains(
-                    search,
-                    ignoreCase = true
-                ) ||
-
-                        debt.comment?.contains(
-                            search,
-                            ignoreCase = true
-                        ) == true
-            }
-    }
-
-    filteredDebts =
-        when (sortMode) {
+        return when (sortMode) {
 
             SortMode.NONE ->
-                filteredDebts
+                result
 
             SortMode.AMOUNT_DESC ->
-                filteredDebts.sortedByDescending {
+                result.sortedByDescending {
                     it.amount
                 }
 
             SortMode.AMOUNT_ASC ->
-                filteredDebts.sortedBy {
+                result.sortedBy {
                     it.amount
                 }
 
             SortMode.DATE_ASC ->
-                filteredDebts.sortedWith(
+                result.sortedWith(
                     compareBy<Debt> {
                         it.returnDate == null
                     }.thenBy {
@@ -284,7 +297,7 @@ fun DebtTrackerScreen(
                 )
 
             SortMode.DATE_DESC ->
-                filteredDebts.sortedWith(
+                result.sortedWith(
                     compareBy<Debt> {
                         it.returnDate == null
                     }.thenByDescending {
@@ -293,11 +306,19 @@ fun DebtTrackerScreen(
                 )
 
             SortMode.NAME_ASC ->
-                filteredDebts.sortedBy {
+                result.sortedBy {
                     it.personName.lowercase()
                 }
         }
+    }
 
+    val currentTab =
+        pagerState.currentPage
+
+    val currentDebts =
+        getFilteredDebts(
+            currentTab
+        )
 
     Scaffold(
 
@@ -403,13 +424,19 @@ fun DebtTrackerScreen(
                         text = "Мне должны",
 
                         selected =
-                            selectedTab == 0,
+                            currentTab == 0,
 
                         modifier =
                             Modifier.weight(1f),
 
                         onClick = {
-                            selectedTab = 0
+
+                            coroutineScope.launch {
+
+                                pagerState.animateScrollToPage(
+                                    0
+                                )
+                            }
                         }
                     )
 
@@ -417,13 +444,19 @@ fun DebtTrackerScreen(
                         text = "Я должен",
 
                         selected =
-                            selectedTab == 1,
+                            currentTab == 1,
 
                         modifier =
                             Modifier.weight(1f),
 
                         onClick = {
-                            selectedTab = 1
+
+                            coroutineScope.launch {
+
+                                pagerState.animateScrollToPage(
+                                    1
+                                )
+                            }
                         }
                     )
                 }
@@ -444,7 +477,7 @@ fun DebtTrackerScreen(
 
                 Text(
                     text =
-                        "Долгов: ${filteredDebts.size}",
+                        "Долгов: ${currentDebts.size}",
 
                     style =
                         MaterialTheme.typography
@@ -495,24 +528,36 @@ fun DebtTrackerScreen(
                     Modifier.height(10.dp)
             )
 
-            DebtList(
-                debts = filteredDebts,
-
-                onDebtClick = { debt ->
-
-                    selectedDebtId =
-                        debt.id
-
-                    debtViewModel.clearHistory()
-
-                    debtViewModel.loadHistory(
-                        debt.id
-                    )
-                },
-
+            HorizontalPager(
+                state = pagerState,
                 modifier =
-                    Modifier.weight(1f)
-            )
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+            ) { page ->
+
+                val pageDebts =
+                    getFilteredDebts(page)
+
+                DebtList(
+                    debts = pageDebts,
+
+                    onDebtClick = { debt ->
+
+                        selectedDebtId =
+                            debt.id
+
+                        debtViewModel.clearHistory()
+
+                        debtViewModel.loadHistory(
+                            debt.id
+                        )
+                    },
+
+                    modifier =
+                        Modifier.fillMaxSize()
+                )
+            }
         }
     }
 
@@ -522,7 +567,7 @@ fun DebtTrackerScreen(
         AddDebtDialog(
 
             debtType =
-                if (selectedTab == 0) {
+                if (currentTab == 0) {
                     DebtType.OWED_TO_ME
                 } else {
                     DebtType.I_OWE
