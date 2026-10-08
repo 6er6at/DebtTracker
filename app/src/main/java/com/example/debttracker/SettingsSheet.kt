@@ -27,6 +27,7 @@ fun SettingsSheet(
     onThemeChanged: (ThemeMode) -> Unit,
     onSortChanged: (SortMode) -> Unit,
     onArchiveClick: () -> Unit,
+    onStatisticsClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
 
@@ -167,6 +168,15 @@ fun SettingsSheet(
             Spacer(
                 modifier = Modifier.height(20.dp)
             )
+
+            Button(
+                onClick = onStatisticsClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Статистика")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onArchiveClick,

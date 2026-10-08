@@ -29,6 +29,12 @@ class DebtViewModel(
     val history: StateFlow<List<DebtHistory>> =
         _history
 
+    private val _allHistory =
+        MutableStateFlow<List<DebtHistory>>(emptyList())
+
+    val allHistory: StateFlow<List<DebtHistory>> =
+        _allHistory
+
     private val database =
         DatabaseProvider.getDatabase(
             application
@@ -47,6 +53,8 @@ class DebtViewModel(
 
             _debts.value =
                 debtDao.getAllDebts()
+
+            _allHistory.value = historyDao.getAllHistory()
 
             // Восстанавливаем все будущие
             // напоминания при запуске приложения.
@@ -98,6 +106,8 @@ class DebtViewModel(
 
             _debts.value =
                 debtDao.getAllDebts()
+
+            _allHistory.value = historyDao.getAllHistory()
         }
     }
 
@@ -161,6 +171,8 @@ class DebtViewModel(
 
             _debts.value =
                 debtDao.getAllDebts()
+
+            _allHistory.value = historyDao.getAllHistory()
         }
     }
 
@@ -258,6 +270,8 @@ class DebtViewModel(
 
             _debts.value =
                 debtDao.getAllDebts()
+
+            _allHistory.value = historyDao.getAllHistory()
 
             _history.value =
                 historyDao.getHistoryForDebt(

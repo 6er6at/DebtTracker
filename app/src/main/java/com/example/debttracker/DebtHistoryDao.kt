@@ -10,6 +10,9 @@ interface DebtHistoryDao {
     @Insert
     suspend fun insertHistory(history: DebtHistory)
 
+    @Query("SELECT * FROM debt_history ORDER BY changedAt DESC")
+    suspend fun getAllHistory(): List<DebtHistory>
+
     @Query(
         "SELECT * FROM debt_history " +
                 "WHERE debtId = :debtId " +
