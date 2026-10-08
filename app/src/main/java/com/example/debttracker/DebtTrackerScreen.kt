@@ -195,6 +195,10 @@ fun DebtTrackerScreen(
         mutableStateOf(false)
     }
 
+    var showStatistics by remember {
+        mutableStateOf(false)
+    }
+
     var selectedDebtId by remember {
         mutableStateOf<Long?>(null)
     }
@@ -228,6 +232,9 @@ fun DebtTrackerScreen(
 
     val history by
     debtViewModel.history.collectAsState()
+
+    val allHistory by
+    debtViewModel.allHistory.collectAsState()
 
     val selectedDebt =
         debts.firstOrNull {
@@ -606,12 +613,25 @@ fun DebtTrackerScreen(
                 showArchive = true
             },
 
+            onStatisticsClick = {
+                showSettings = false
+                showStatistics = true
+            },
+
             onDismiss = {
                 showSettings = false
             }
         )
     }
 
+
+    if (showStatistics) {
+        StatisticsSheet(
+            debts = debts,
+            history = allHistory,
+            onDismiss = { showStatistics = false }
+        )
+    }
 
     if (showArchive) {
 
